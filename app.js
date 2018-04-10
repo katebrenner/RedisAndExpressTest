@@ -15,8 +15,8 @@ client.on("error", function(err) {
 app.get("/events/:USER_ID/stats", function(req, res) {
   //get USER_ID from params and store for later use
   let user = req.params.USER_ID;
-  //getting all members of set
-  client.smembers(user, function(err, replies) {
+  //getting all elements of list
+  client.lrange(user, 0, -1, function(err, replies) {
     //if there is no error....
     if (!err) {
       //the below code will iterate over the response and add up each number
@@ -55,11 +55,12 @@ app.get("/events/:USER_ID/:VALUE", function(req, res) {
   //add the value to the user's set
   client.get(user, value, function(error, result) {
     // console.log(!isNaN(user));
+    console.log(user);
     if (!isNaN(value) && !isNaN(user)) {
-      client.watch(user, value);
-      console.log(client.multi);
-      client.sadd(user, value);
-      client.exec;
+      // client.watch(user, value);
+      // console.log(client.multi);
+      client.lpush(user, value);
+      // client.exec;
       res.send({});
     } else {
       res.send({});
