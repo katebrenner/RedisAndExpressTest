@@ -2,12 +2,9 @@
 const app = require("express")();
 const redis = require("redis");
 const PORT = process.env.PORT || 3000;
-
-// const { PORT=3000, NODE_ENV='development', DB_PATH='./db/database.db' } = process.env;
-
 //creating a new redis client
 const client = redis.createClient();
-//
+
 client.on("error", function(err) {
   console.log("Error " + err);
 });
@@ -21,6 +18,7 @@ app.get("/events/:USER_ID/stats", function(req, res) {
     if (!err) {
       //the below code will iterate over the response and add up each number
       if (replies) {
+        // console.log(replies);
         let num = 0;
         replies.forEach(el => {
           num = num + parseInt(el);
@@ -35,10 +33,8 @@ app.get("/events/:USER_ID/stats", function(req, res) {
         });
         //obtaining the average by deviding the total number by the length
         average = num / replies.length;
-        console.log(replies.length);
-        console.log(max);
         //sending all the above information to the client
-        res.send({ user: { count: replies.length, avg: average, sum: num, high: max, low: min } });
+        res.send({ user: { count: replies.length, avg: average, sum: num, high: parseInt(max), low: parseInt(min) } });
       } else {
         res.send({});
       }
@@ -52,15 +48,16 @@ app.get("/events/:USER_ID/:VALUE", function(req, res) {
   // get the USER_ID and VALUE from params and store for later use
   let value = req.params.VALUE;
   let user = req.params.USER_ID;
-  //add the value to the user's set
+  //add the value to the user's list
   client.get(user, value, function(error, result) {
-    // console.log(!isNaN(user));
     console.log(user);
+    //make sure that value and user are numbers, so that a string , ie "hello" wont get added if it is entered in the URL
     if (!isNaN(value) && !isNaN(user)) {
-      // client.watch(user, value);
-      // console.log(client.multi);
+      //watch to make sure that "a request issued by another client is served in the middle of the execution of a Redis transaction" https://redis.io/topics/transactions
+      client.watch(user, value);
+      client.MULTI();
       client.lpush(user, value);
-      // client.exec;
+      client.exec();
       res.send({});
     } else {
       res.send({});
