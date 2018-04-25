@@ -14,11 +14,15 @@ app.get("/events/:USER_ID/stats", function(req, res) {
   let user = req.params.USER_ID;
   //getting all elements of list
   client.lrange(user, 0, -1, function(err, replies) {
+//if there is an error
+    if (err) {
+      res.send(err)
+    }
     //if there is no error....
-    if (!err) {
+    else {
       //the below code will iterate over the response and add up each number
-      if (replies) {
-        // console.log(replies);
+      if (replies.length) {
+        console.log(replies);
         let num = 0;
         replies.forEach(el => {
           num = num + parseInt(el);
@@ -38,8 +42,6 @@ app.get("/events/:USER_ID/stats", function(req, res) {
       } else {
         res.send({});
       }
-    } else {
-      res.send("error");
     }
   });
 });
@@ -50,7 +52,7 @@ app.get("/events/:USER_ID/:VALUE", function(req, res) {
   let user = req.params.USER_ID;
   //add the value to the user's list
   client.get(user, value, function(error, result) {
-    console.log(user);
+    // console.log(user);
     //make sure that value and user are numbers, so that a string , ie "hello" wont get added if it is entered in the URL
     if (!isNaN(value) && !isNaN(user)) {
       //watch to make sure that "a request issued by another client is served in the middle of the execution of a Redis transaction" https://redis.io/topics/transactions
@@ -64,6 +66,10 @@ app.get("/events/:USER_ID/:VALUE", function(req, res) {
     }
   });
 });
+
+app.get("/*", function(req,res) {
+res.status(404).send("try again");
+})
 
 app.listen(PORT, () => {
   console.log(`listening on port ${PORT}`);
